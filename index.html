@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>3D Exhibition Studio — Eric Character</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-studio-center: #161c28;
+  --bg-studio-edge: #06080d;
+  --panel-bg: rgba(18, 24, 38, 0.72);
+  --panel-bg-solid: #0d121c;
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --panel-border-top: rgba(255, 255, 255, 0.16);
+  --panel-shadow: 0 30px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --accent-cyan: #00f0ff;
+  --accent-emerald: #10b981;
+  --accent-laser: #ff1744;
+  --accent-glow: rgba(0, 240, 255, 0.3);
+  --text-primary: #f8fafc;
+  --text-secondary: rgba(248, 250, 252, 0.70);
+  --text-muted: rgba(248, 250, 252, 0.45);
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Space Grotesk', -apple-system, monospace;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 35%, var(--bg-studio-center) 0%, #0d111a 50%, var(--bg-studio-edge) 100%);
+  font-family: var(--font-ui); color: var(--text-primary);
+  user-select: none; -webkit-font-smoothing: antialiased;
+}
+
+#studio-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; cursor: grab;
+}
+#studio-canvas:active { cursor: grabbing; }
+
+/* ── Fallback Dark Styling for all Native Form Controls ── */
+select, option, input, button {
+  font-family: inherit;
+  color-scheme: dark;
+}
+select option {
+  background-color: var(--panel-bg-solid) !important;
+  color: var(--text-primary) !important;
+  padding: 10px 14px;
+}
+select option:hover, select option:checked {
+  background-color: #1a2438 !important;
+  color: var(--accent-cyan) !important;
+}
+
+/* ── Apple-Grade Glassmorphism Floating Top Bar ── */
+.top-island {
+  position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+  width: calc(100% - 40px); max-width: 1100px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  border: 1px solid var(--panel-border);
+  border-top-color: var(--panel-border-top);
+  border-radius: 999px;
+  box-shadow: var(--panel-shadow);
+  z-index: 20;
+}
+
+.brand-section { display: flex; align-items: center; gap: 12px; }
+.status-beacon {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 12px var(--accent-cyan);
+  animation: pulseBeacon 2.4s ease-in-out infinite;
+}
+@keyframes pulseBeacon {
+  0%, 100% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 18px var(--accent-cyan); }
+}
+.brand-title {
+  font-size: 13px; font-weight: 600; letter-spacing: -0.2px; color: var(--text-primary);
+}
+.brand-sub {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted);
+}
+
+.controls-deck { display: flex; align-items: center; gap: 8px; }
+
+/* ── Custom Glassmorphic Dropdown Component ── */
+.glass-dropdown {
+  position: relative;
+  display: inline-block;
+}
+.glass-dropdown-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-dropdown-btn:hover, .glass-dropdown-btn.active {
+  background-color: rgba(255, 255, 255, 0.10);
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.15);
+}
+.glass-dropdown-btn .chevron {
+  font-size: 8px;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+.glass-dropdown.open .glass-dropdown-btn .chevron {
+  transform: rotate(180deg);
+}
+
+.glass-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 180px;
+  background: rgba(13, 18, 28, 0.94);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 240, 255, 0.12);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.97);
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-dropdown.open .glass-dropdown-menu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+.dropdown-item:hover {
+  background: rgba(0, 240, 255, 0.12);
+  color: var(--text-primary);
+}
+.dropdown-item.selected {
+  background: rgba(0, 240, 255, 0.18);
+  color: var(--accent-cyan);
+  font-weight: 600;
+}
+.dropdown-item .check {
+  font-size: 11px;
+  color: var(--accent-cyan);
+  opacity: 0;
+}
+.dropdown-item.selected .check {
+  opacity: 1;
+}
+
+/* ── Frosted Action Buttons ── */
+.kiosk-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08); border-top-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary); font-family: var(--font-ui); font-size: 12px; font-weight: 500;
+  padding: 6px 14px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex; align-items: center; gap: 6px;
+  outline: none;
+}
+.kiosk-btn:hover {
+  background: rgba(255, 255, 255, 0.10); transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.kiosk-btn.active {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+/* ── Minimalist Studio Telemetry Card ── */
+.telemetry-card {
+  position: absolute; top: 96px; right: 24px; width: 220px;
+  background: var(--panel-bg); backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--panel-border); border-top-color: var(--panel-border-top);
+  border-radius: 18px; box-shadow: var(--panel-shadow);
+  z-index: 20; padding: 14px; transition: all 0.3s;
+}
+.telem-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+}
+.telem-title { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); }
+.telem-fps { font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--accent-emerald); background: rgba(16, 185, 129, 0.12); padding: 2px 6px; border-radius: 999px; }
+.telem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.telem-box { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 10px; padding: 6px 10px; }
+.telem-label { font-family: var(--font-mono); font-size: 8px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); }
+.telem-val { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 2px; }
+.telem-val.glow { color: var(--accent-cyan); }
+.telem-val.laser { color: #ff1744; text-shadow: 0 0 10px rgba(255, 23, 68, 0.5); }
+
+/* ── Tactical Camera Preview Frame (Apple Glass Window) ── */
+.cam-preview-frame {
+  position: absolute; bottom: 24px; right: 24px; width: 280px;
+  background: var(--panel-bg); backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--panel-border); border-top-color: var(--panel-border-top);
+  border-radius: 20px; box-shadow: var(--panel-shadow);
+  z-index: 20; overflow: hidden; transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cam-preview-frame.expanded { width: 420px; }
+.cam-hdr {
+  display: flex; align-items: center; justify-content: space-between; padding: 8px 14px;
+  background: rgba(0, 0, 0, 0.35); border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.cam-status { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); text-transform: uppercase; }
+.cam-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-laser); box-shadow: 0 0 8px var(--accent-laser); }
+.cam-btn-expand {
+  background: rgba(255, 255, 255, 0.08); border: none; color: var(--text-secondary);
+  border-radius: 999px; font-size: 10px; font-weight: 600; padding: 2px 8px; cursor: pointer;
+  transition: all 0.2s;
+}
+.cam-btn-expand:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.cam-viewport {
+  position: relative; width: 100%; height: 200px; background: #06080e; transition: height 0.3s;
+}
+.cam-preview-frame.expanded .cam-viewport { height: 300px; }
+.cam-viewport video {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.92;
+}
+.cam-viewport canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);
+}
+
+/* ── Floating Kiosk Instruction Pill (Bottom Center) ── */
+.kiosk-footer {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 18px; padding: 10px 24px;
+  background: var(--panel-bg); backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  border: 1px solid var(--panel-border); border-top-color: var(--panel-border-top);
+  border-radius: 999px; box-shadow: var(--panel-shadow);
+  z-index: 20; font-size: 11px; font-weight: 500; color: var(--text-secondary);
+}
+.guide-item { display: flex; align-items: center; gap: 6px; }
+.guide-item strong { color: var(--text-primary); font-weight: 600; }
+.guide-item span.accent { color: var(--accent-cyan); font-family: var(--font-mono); font-weight: 700; }
+.guide-item span.accent-red { color: #ff1744; font-family: var(--font-mono); font-weight: 700; }
+
+/* ── Sleek Fullscreen Loading Screen ── */
+.loading-overlay {
+  position: fixed; inset: 0; background: radial-gradient(ellipse at center, #101522 0%, #06080d 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 999; transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s;
+}
+.loading-overlay.hidden {
+  opacity: 0; visibility: hidden; pointer-events: none;
+}
+.loading-box {
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  background: rgba(18, 24, 38, 0.7); backdrop-filter: blur(30px);
+  border: 1px solid rgba(0, 240, 255, 0.25); border-radius: 28px;
+  padding: 36px 44px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 240, 255, 0.15);
+  text-align: center;
+}
+.spinner-ring {
+  width: 56px; height: 56px; border-radius: 50%;
+  border: 3px solid rgba(0, 240, 255, 0.15);
+  border-top-color: var(--accent-cyan);
+  animation: spinRing 1s linear infinite;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+}
+@keyframes spinRing { to { transform: rotate(360deg); } }
+.loading-title {
+  font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.2px;
+}
+.loading-sub {
+  font-family: var(--font-mono); font-size: 11px; color: var(--accent-cyan); letter-spacing: 0.5px;
+}
+.progress-bar-bg {
+  width: 200px; height: 4px; background: rgba(255, 255, 255, 0.08); border-radius: 999px; overflow: hidden;
+}
+.progress-bar-fill {
+  width: 0%; height: 100%; background: linear-gradient(90deg, #00f0ff, #10b981);
+  border-radius: 999px; transition: width 0.2s ease;
+}
+
+/* ── Notifications / Toasts ── */
+.toasts { position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column-reverse; gap: 8px; z-index: 200; pointer-events: none; }
+.toast { display: flex; align-items: center; gap: 8px; padding: 8px 18px; background: rgba(18, 24, 38, 0.94); backdrop-filter: blur(20px); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 999px; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6); font-size: 11px; font-weight: 500; color: #fff; animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); transition: opacity 0.3s, transform 0.3s; }
+.toast.fade { opacity: 0; transform: translateY(-8px); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Mobile-First Responsive Overrides ── */
+@media (max-width: 860px) {
+  .top-island { height: auto; padding: 12px 16px; border-radius: 24px; flex-wrap: wrap; gap: 10px; }
+  .controls-deck { flex-wrap: wrap; width: 100%; justify-content: space-between; }
+  .telemetry-card { display: none; }
+  .cam-preview-frame { width: 160px; bottom: 16px; right: 16px; border-radius: 14px; }
+  .cam-preview-frame .cam-viewport { height: 120px; }
+  .kiosk-footer { padding: 8px 16px; font-size: 10px; gap: 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 3D WebGL Studio Canvas -->
+<div id="studio-canvas"></div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-box">
+    <div class="spinner-ring"></div>
+    <div>
+      <div class="loading-title">3D Character Exhibition</div>
+      <div id="loading-sub-text" class="loading-sub">Loading Eric (Rigged FBX)...</div>
+    </div>
+    <div class="progress-bar-bg">
+      <div id="progress-bar-fill" class="progress-bar-fill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Apple-Grade Glassmorphism Floating Top Bar -->
+<header class="top-island">
+  <div class="brand-section">
+    <div class="status-beacon"></div>
+    <div>
+      <h1 class="brand-title">3D Studio Exhibition</h1>
+      <div class="brand-sub">Eric Character · Rigged FBX · 60 FPS</div>
+    </div>
+  </div>
+
+  <div class="controls-deck">
+    <!-- Custom Glassmorphic Lighting Environment Dropdown -->
+    <div id="dropdown-lighting" class="glass-dropdown">
+      <button id="btn-lighting-trigger" class="glass-dropdown-btn" title="Select Studio Lighting Theme" aria-haspopup="true" aria-expanded="false">
+        <span id="label-lighting-icon">✨</span>
+        <span id="label-lighting-text">Studio Natural</span>
+        <span class="chevron">▼</span>
+      </button>
+      <div class="glass-dropdown-menu" role="menu">
+        <button class="dropdown-item selected" data-value="classic" role="menuitem">
+          <span>✨ Studio Natural</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="dropdown-item" data-value="cinematic" role="menuitem">
+          <span>🌅 Warm Cinematic</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="dropdown-item" data-value="noir" role="menuitem">
+          <span>🌌 Midnight Obsidian</span>
+          <span class="check">✓</span>
+        </button>
+        <button class="dropdown-item" data-value="rim" role="menuitem">
+          <span>⚡ Cyber Rim</span>
+          <span class="check">✓</span>
+        </button>
+      </div>
+    </div>
+
+    <button id="btn-tracker" class="kiosk-btn active" title="Toggle Neural Hand Tracking">
+      <span>📷</span> Tracker: ON
+    </button>
+    <button id="btn-sfx" class="kiosk-btn active" title="Toggle Tactile Audio SFX">
+      <span>🔊</span> SFX: ON
+    </button>
+    <button id="btn-orbit" class="kiosk-btn" title="Toggle Continuous Turntable Orbit">
+      <span>⟳</span> Auto-Spin
+    </button>
+    <button id="btn-reset" class="kiosk-btn" title="Reset View to 0° Front">
+      <span>🎯</span> Reset
+    </button>
+    <button id="btn-fullscreen" class="kiosk-btn" title="Toggle Fullscreen">
+      <span>⛶</span> Fullscreen
+    </button>
+  </div>
+</header>
+
+<!-- Minimalist Studio Telemetry Card -->
+<aside class="telemetry-card">
+  <div class="telem-header">
+    <span class="telem-title">EXHIBIT TELEMETRY</span>
+    <span id="badge-fps" class="telem-fps">60 FPS</span>
+  </div>
+  <div class="telem-grid">
+    <div class="telem-box">
+      <div class="telem-label">BEARING</div>
+      <div id="val-angle" class="telem-val glow">0°</div>
+    </div>
+    <div class="telem-box">
+      <div class="telem-label">GESTURE</div>
+      <div id="val-gesture" class="telem-val">HOVERING</div>
+    </div>
+    <div class="telem-box">
+      <div class="telem-label">ZOOM</div>
+      <div id="val-zoom" class="telem-val">5.8m</div>
+    </div>
+    <div class="telem-box">
+      <div class="telem-label">LASER POINTER</div>
+      <div id="val-laser" class="telem-val laser">ACTIVE 🔴</div>
+    </div>
+  </div>
+</aside>
+
+<!-- Tactical Camera Preview Frame -->
+<div id="cam-frame" class="cam-preview-frame">
+  <div class="cam-hdr">
+    <div class="cam-status">
+      <span class="cam-dot"></span>
+      <span>HAND TRACKER</span>
+    </div>
+    <button id="btn-cam-expand" class="cam-btn-expand">⛶ Expand</button>
+  </div>
+  <div class="cam-viewport">
+    <video id="cam-video" autoplay playsinline muted></video>
+    <canvas id="cam-hud-canvas" width="640" height="480"></canvas>
+  </div>
+</div>
+
+<!-- Floating Kiosk Instruction Pill (Bottom Center) -->
+<footer class="kiosk-footer">
+  <div class="guide-item"><span class="accent">👌 Pinch & Drag</span> <span>Rotate 360°</span></div>
+  <div class="guide-item"><span class="accent-red">🔴 Laser Pointer</span> <span>Precision Aim</span></div>
+  <div class="guide-item"><span class="accent">✊ Fist</span> <span>Freeze View</span></div>
+  <div class="guide-item"><span class="accent">👍 Thumbs Up</span> <span>Reset (0°)</span></div>
+</footer>
+
+<div id="toasts" class="toasts"></div>
+
+<!-- Three.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- 3D Loaders (FBX Loader with fflate decompression) -->
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.8.0/umd/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+<!-- MediaPipe Hands -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+
+<script>
+(function(){
+"use strict";
+
+const FBX_MODEL_PATH = 'rp_eric_rigged_001_yup_a.fbx';
+
+function toast(msg, type) {
+  const c = document.getElementById('toasts');
+  if (!c) return;
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span style="color:${type==='ok'?'#00f0ff':type==='warn'?'#f59e0b':'#10b981'}">${type==='ok'?'✓':type==='warn'?'⚠':'ℹ'}</span> ${msg}`;
+  c.appendChild(t);
+  setTimeout(()=>{ t.classList.add('fade'); setTimeout(()=>t.remove(), 350); }, 3000);
+}
+
+// ── Web Audio API SFX ──
+let audioCtx = null;
+let sfxEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) audioCtx = new AudioContext();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+window.addEventListener('click', initAudio, { once: false });
+window.addEventListener('touchstart', initAudio, { once: false });
+
+function playFistSFX() {
+  if (!sfxEnabled) return;
+  initAudio();
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const punchOsc = audioCtx.createOscillator();
+  const punchGain = audioCtx.createGain();
+  punchOsc.type = 'sawtooth';
+  punchOsc.frequency.setValueAtTime(260, now);
+  punchOsc.frequency.exponentialRampToValueAtTime(45, now + 0.16);
+  punchGain.gain.setValueAtTime(0.35, now);
+  punchGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+  punchOsc.connect(punchGain);
+  punchGain.connect(audioCtx.destination);
+  punchOsc.start(now);
+  punchOsc.stop(now + 0.19);
+}
+
+function playThumbsUpSFX() {
+  if (!sfxEnabled) return;
+  initAudio();
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2800, now);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, now + i * 0.065);
+    gain.gain.setValueAtTime(0.001, now + i * 0.065);
+    gain.gain.linearRampToValueAtTime(0.20, now + i * 0.065 + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.065 + 0.28);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now + i * 0.065);
+    osc.stop(now + i * 0.065 + 0.30);
+  });
+}
+
+function playPinchGrabSFX() {
+  if (!sfxEnabled) return;
+  initAudio();
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(340, now);
+  osc.frequency.exponentialRampToValueAtTime(940, now + 0.12);
+  gain.gain.setValueAtTime(0.001, now);
+  gain.gain.linearRampToValueAtTime(0.28, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.20);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 0.21);
+}
+
+function playPinchReleaseSFX() {
+  if (!sfxEnabled) return;
+  initAudio();
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(720, now);
+  osc.frequency.exponentialRampToValueAtTime(260, now + 0.12);
+  gain.gain.setValueAtTime(0.18, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 0.14);
+}
+
+// ── Three.js Studio Scene Setup ──
+const container = document.getElementById('studio-canvas');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0e16);
+scene.fog = new THREE.FogExp2(0x0a0e16, 0.032);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0.4, 5.8);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.25;
+renderer.outputEncoding = THREE.sRGBEncoding;
+container.appendChild(renderer.domElement);
+
+// ── Master Exhibition 3-Point Studio Lighting Setup ──
+const ambientLight = new THREE.AmbientLight(0x283040, 0.75);
+scene.add(ambientLight);
+
+// Key Light
+const keyLight = new THREE.DirectionalLight(0xfff8f0, 1.8);
+keyLight.position.set(4, 7, 5);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.width = 2048;
+keyLight.shadow.mapSize.height = 2048;
+keyLight.shadow.bias = -0.0001;
+scene.add(keyLight);
+
+// Fill Light
+const fillLight = new THREE.DirectionalLight(0x88b0d8, 0.75);
+fillLight.position.set(-5, 3, -2);
+scene.add(fillLight);
+
+// Rim Light
+const rimLight = new THREE.DirectionalLight(0xffffff, 1.4);
+rimLight.position.set(0, 5, -6);
+scene.add(rimLight);
+
+// Ground Bounce Light
+const bounceLight = new THREE.DirectionalLight(0x1a2638, 0.45);
+bounceLight.position.set(0, -3, 2);
+scene.add(bounceLight);
+
+// ── Realistic Studio Pedestal & Shadows ──
+const stageGroup = new THREE.Group();
+stageGroup.position.y = -1.24;
+scene.add(stageGroup);
+
+// Platform Top Level is at stageGroup.position.y + 0.06 = -1.18
+const platformGeo = new THREE.CylinderGeometry(1.85, 2.0, 0.12, 64);
+const platformMat = new THREE.MeshStandardMaterial({
+  color: 0x121722,
+  roughness: 0.42,
+  metalness: 0.75
+});
+const platformMesh = new THREE.Mesh(platformGeo, platformMat);
+platformMesh.receiveShadow = true;
+stageGroup.add(platformMesh);
+
+// Specular Bevel Edge Ring
+const bevelRing = new THREE.Mesh(
+  new THREE.RingGeometry(1.83, 1.86, 64),
+  new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.9, side: THREE.DoubleSide })
+);
+bevelRing.rotation.x = -Math.PI / 2;
+bevelRing.position.y = 0.061;
+stageGroup.add(bevelRing);
+
+// Ambient Occlusion Contact Drop Shadow
+function createSoftShadowTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(128, 128, 10, 128, 128, 120);
+  grad.addColorStop(0, 'rgba(0, 0, 0, 0.85)');
+  grad.addColorStop(0.3, 'rgba(0, 0, 0, 0.55)');
+  grad.addColorStop(0.7, 'rgba(0, 0, 0, 0.2)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 256);
+  return new THREE.CanvasTexture(canvas);
+}
+
+const shadowPlane = new THREE.Mesh(
+  new THREE.PlaneGeometry(3.6, 3.6),
+  new THREE.MeshBasicMaterial({ map: createSoftShadowTexture(), transparent: true, opacity: 0.85, depthWrite: false })
+);
+shadowPlane.rotation.x = -Math.PI / 2;
+shadowPlane.position.y = 0.062;
+stageGroup.add(shadowPlane);
+
+// ── Realistic 3D Laser Pointer System ──
+const laserPointerGroup = new THREE.Group();
+laserPointerGroup.name = 'LaserPointerSystem';
+
+// 1. Dynamic Laser Beam (Glowing Volumetric Ray from Emitter to Target Dot)
+const laserBeamPoints = [new THREE.Vector3(1.2, -0.6, 3.5), new THREE.Vector3(0, 0.4, 1.8)];
+const laserBeamGeo = new THREE.BufferGeometry().setFromPoints(laserBeamPoints);
+
+// Glowing Laser Core Line
+const laserCoreMat = new THREE.LineBasicMaterial({
+  color: 0xffffff,
+  linewidth: 2,
+  transparent: true,
+  opacity: 0.95
+});
+const laserCoreLine = new THREE.Line(laserBeamGeo, laserCoreMat);
+laserPointerGroup.add(laserCoreLine);
+
+// Luminous Outer Laser Glow Ray
+const laserGlowMat = new THREE.LineBasicMaterial({
+  color: 0xff1744,
+  linewidth: 3.5,
+  transparent: true,
+  opacity: 0.75,
+  blending: THREE.AdditiveBlending
+});
+const laserGlowLine = new THREE.Line(laserBeamGeo, laserGlowMat);
+laserPointerGroup.add(laserGlowLine);
+
+// 2. Laser Impact Dot (At the Contact Surface)
+const laserDotGroup = new THREE.Group();
+
+// Center Ultra-Hot White Dot
+const dotCore = new THREE.Mesh(
+  new THREE.SphereGeometry(0.012, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0xffffff })
+);
+laserDotGroup.add(dotCore);
+
+// Brilliant Ruby Laser Aura
+const dotAura = new THREE.Mesh(
+  new THREE.SphereGeometry(0.038, 16, 16),
+  new THREE.MeshBasicMaterial({
+    color: 0xff003b,
+    transparent: true,
+    opacity: 0.88,
+    blending: THREE.AdditiveBlending
+  })
+);
+laserDotGroup.add(dotAura);
+
+// Soft Outer Halo Disk
+const dotHalo = new THREE.Mesh(
+  new THREE.RingGeometry(0.02, 0.065, 32),
+  new THREE.MeshBasicMaterial({
+    color: 0xff1744,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.75,
+    blending: THREE.AdditiveBlending
+  })
+);
+laserDotGroup.add(dotHalo);
+
+// Dynamic Laser Point Light casting real red illumination on Eric and pedestal
+const laserLight = new THREE.PointLight(0xff003b, 2.4, 2.6);
+laserDotGroup.add(laserLight);
+
+laserPointerGroup.add(laserDotGroup);
+scene.add(laserPointerGroup);
+
+// ── Model Stage Group & Dedicated FBX Loader ──
+const modelGroup = new THREE.Group();
+scene.add(modelGroup);
+
+let currentModel = null;
+let mixer = null;
+const clock = new THREE.Clock();
+
+function setupPermanentFBXModel(object) {
+  if (currentModel) modelGroup.remove(currentModel);
+  currentModel = object;
+  mixer = null;
+
+  // Handle any animations in the FBX
+  if (object.animations && object.animations.length > 0) {
+    mixer = new THREE.AnimationMixer(object);
+    const action = mixer.clipAction(object.animations[0]);
+    action.play();
+  }
+
+  // Calculate strict bounding box to ground the model on top of the pedestal
+  const box = new THREE.Box3().setFromObject(object);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+
+  const maxDim = Math.max(size.x, size.y, size.z) || 1;
+  const targetHeight = 2.45; // ideal height proportion
+  const scale = targetHeight / maxDim;
+  object.scale.set(scale, scale, scale);
+
+  // Position: Centered in X and Z, feet touching pedestal surface (-1.18)
+  const pedestalTopY = -1.18;
+  object.position.x = -center.x * scale;
+  object.position.y = -box.min.y * scale + pedestalTopY;
+  object.position.z = -center.z * scale;
+
+  object.traverse((child) => {
+    if (child.isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => {
+            m.side = THREE.DoubleSide;
+            m.roughness = m.roughness !== undefined ? Math.max(0.2, m.roughness) : 0.45;
+            m.needsUpdate = true;
+          });
+        } else {
+          child.material.side = THREE.DoubleSide;
+          child.material.roughness = child.material.roughness !== undefined ? Math.max(0.2, child.material.roughness) : 0.45;
+          child.material.needsUpdate = true;
+        }
+      }
+      child.userData.partName = child.name || 'Eric Character Mesh';
+      child.userData.description = 'Rigged 3D Human Anatomy Structure';
+    }
+  });
+
+  modelGroup.add(currentModel);
+  targetRotY = 0;
+  rotY = 0;
+  targetZoom = 5.8;
+
+  // Hide loading screen
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.classList.add('hidden');
+
+  toast('🎩 Eric 3D Character (Rigged FBX) Exhibited.', 'ok');
+}
+
+function loadPermanentCharacter() {
+  const overlay = document.getElementById('loading-overlay');
+  const subText = document.getElementById('loading-sub-text');
+  const barFill = document.getElementById('progress-bar-fill');
+
+  if (overlay) overlay.classList.remove('hidden');
+  if (subText) subText.textContent = 'Loading 3D Model: rp_eric_rigged_001_yup_a.fbx...';
+
+  const loader = new THREE.FBXLoader();
+  loader.load(
+    FBX_MODEL_PATH,
+    (object) => {
+      if (barFill) barFill.style.width = '100%';
+      setTimeout(() => {
+        setupPermanentFBXModel(object);
+      }, 250);
+    },
+    (xhr) => {
+      if (xhr.lengthComputable && xhr.total > 0) {
+        const percent = Math.round((xhr.loaded / xhr.total) * 100);
+        if (barFill) barFill.style.width = `${percent}%`;
+        if (subText) subText.textContent = `Loading 3D Model: ${percent}% (${(xhr.loaded / 1048576).toFixed(1)} MB)...`;
+      }
+    },
+    (err) => {
+      console.error('FBX Load Error:', err);
+      if (subText) subText.textContent = 'Retrying model load...';
+      toast('Failed to load FBX model. Check server connection.', 'warn');
+    }
+  );
+}
+
+// Load Eric character immediately
+loadPermanentCharacter();
+
+// ── Studio Lighting Presets ──
+function setLightingPreset(preset) {
+  if (preset === 'classic') {
+    scene.background.set(0x0a0e16);
+    scene.fog.color.set(0x0a0e16);
+    ambientLight.color.set(0x283040); ambientLight.intensity = 0.75;
+    keyLight.color.set(0xfff8f0); keyLight.intensity = 1.8;
+    fillLight.color.set(0x88b0d8); fillLight.intensity = 0.75;
+    rimLight.color.set(0xffffff); rimLight.intensity = 1.4;
+    platformMat.color.set(0x121722);
+  } else if (preset === 'cinematic') {
+    scene.background.set(0x120b0e);
+    scene.fog.color.set(0x120b0e);
+    ambientLight.color.set(0x3a2228); ambientLight.intensity = 0.6;
+    keyLight.color.set(0xf59e0b); keyLight.intensity = 2.0;
+    fillLight.color.set(0xf43f5e); fillLight.intensity = 0.8;
+    rimLight.color.set(0xfef08a); rimLight.intensity = 1.6;
+    platformMat.color.set(0x221316);
+  } else if (preset === 'noir') {
+    scene.background.set(0x040508);
+    scene.fog.color.set(0x040508);
+    ambientLight.color.set(0x111620); ambientLight.intensity = 0.45;
+    keyLight.color.set(0xe2e8f0); keyLight.intensity = 1.6;
+    fillLight.color.set(0x475569); fillLight.intensity = 0.5;
+    rimLight.color.set(0x38bdf8); rimLight.intensity = 1.8;
+    platformMat.color.set(0x090c12);
+  } else if (preset === 'rim') {
+    scene.background.set(0x050811);
+    scene.fog.color.set(0x050811);
+    ambientLight.color.set(0x00f0ff); ambientLight.intensity = 0.4;
+    keyLight.color.set(0x00f0ff); keyLight.intensity = 1.5;
+    fillLight.color.set(0xd946ef); fillLight.intensity = 1.0;
+    rimLight.color.set(0x00f0ff); rimLight.intensity = 2.2;
+    platformMat.color.set(0x070c18);
+  }
+}
+
+// ── Custom Glass Dropdown Controller ──
+const dropdownContainer = document.getElementById('dropdown-lighting');
+const dropdownBtn = document.getElementById('btn-lighting-trigger');
+const labelIcon = document.getElementById('label-lighting-icon');
+const labelText = document.getElementById('label-lighting-text');
+
+if (dropdownBtn && dropdownContainer) {
+  dropdownBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdownContainer.classList.toggle('open');
+    dropdownBtn.setAttribute('aria-expanded', dropdownContainer.classList.contains('open'));
+  });
+
+  document.querySelectorAll('#dropdown-lighting .dropdown-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.querySelectorAll('#dropdown-lighting .dropdown-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      const val = item.getAttribute('data-value');
+      const textSpan = item.querySelector('span');
+      if (textSpan) {
+        const fullText = textSpan.textContent.trim();
+        const parts = fullText.split(' ');
+        labelIcon.textContent = parts[0] || '✨';
+        labelText.textContent = parts.slice(1).join(' ') || 'Studio Natural';
+      }
+      dropdownContainer.classList.remove('open');
+      dropdownBtn.setAttribute('aria-expanded', 'false');
+      setLightingPreset(val);
+      toast(`Studio Lighting: ${labelText.textContent}`, 'ok');
+    });
+  });
+
+  window.addEventListener('click', () => {
+    if (dropdownContainer.classList.contains('open')) {
+      dropdownContainer.classList.remove('open');
+      dropdownBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
+// ── State & 1:1 Damped Continuous Physical Rotation ──
+let rotY = 0, targetRotY = 0, angVel = 0;
+let zoom = 5.8, targetZoom = 5.8;
+let panX = 0, panY = 0, tPanX = 0, tPanY = 0;
+let autoSpin = false, sensitivity = 1.0;
+let currentTp = null, lastDetectedLandmarks = null;
+let gestureLabel = 'HOVERING';
+let isPinchActive = false, wasPinchActive = false;
+let wasFist = false, wasThumbUp = false;
+let prevPinchPos = null;
+
+// Mouse & Touch Controls
+let isMouseDown = false, isRightDown = false;
+let lastMouseX = 0, lastMouseY = 0;
+
+renderer.domElement.addEventListener('mousedown', e => {
+  if (e.button === 2 || e.shiftKey) isRightDown = true;
+  else isMouseDown = true;
+  lastMouseX = e.clientX; lastMouseY = e.clientY;
+});
+window.addEventListener('mouseup', () => { isMouseDown = false; isRightDown = false; });
+window.addEventListener('mousemove', e => {
+  const dx = e.clientX - lastMouseX;
+  const dy = e.clientY - lastMouseY;
+  lastMouseX = e.clientX; lastMouseY = e.clientY;
+  if (isMouseDown) {
+    targetRotY += dx * 0.008;
+    angVel = dx * 0.0028;
+  } else if (isRightDown) {
+    tPanX += dx * 0.0035;
+    tPanY -= dy * 0.0035;
+  }
+});
+renderer.domElement.addEventListener('wheel', e => {
+  e.preventDefault();
+  targetZoom = Math.max(2.4, Math.min(10.5, targetZoom + e.deltaY * 0.0035));
+}, { passive: false });
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+
+// Hover Raycaster
+const raycaster = new THREE.Raycaster();
+const mouseVec = new THREE.Vector2();
+
+window.addEventListener('mousemove', e => {
+  const r = renderer.domElement.getBoundingClientRect();
+  mouseVec.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+  mouseVec.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+});
+
+// ── Hand Tracker on Camera HUD Canvas ──
+const camCanvas = document.getElementById('cam-hud-canvas');
+const camCtx = camCanvas ? camCanvas.getContext('2d') : null;
+
+function drawHUDText(text, x, y, options = {}) {
+  if (!camCtx) return;
+  camCtx.save();
+  camCtx.translate(x, y);
+  camCtx.scale(-1, 1);
+  camCtx.font = options.font || '600 10px "Inter", -apple-system, sans-serif';
+  camCtx.textAlign = 'center';
+  if (options.bg) {
+    const tw = camCtx.measureText(text).width;
+    const pad = options.pad || 8;
+    camCtx.fillStyle = options.bg;
+    camCtx.fillRect(-tw / 2 - pad, -10, tw + pad * 2, 20);
+    if (options.border) {
+      camCtx.strokeStyle = options.border;
+      camCtx.lineWidth = 1;
+      camCtx.strokeRect(-tw / 2 - pad, -10, tw + pad * 2, 20);
+    }
+  }
+  camCtx.fillStyle = options.color || '#ff1744';
+  camCtx.fillText(text, 0, 4);
+  camCtx.restore();
+}
+
+function drawCamHUD(lm, isPinch = false, pinchMid = null) {
+  if (!camCtx) return;
+  const vid = document.getElementById('cam-video');
+  if (vid && vid.videoWidth > 0) {
+    if (camCanvas.width !== vid.videoWidth || camCanvas.height !== vid.videoHeight) {
+      camCanvas.width = vid.videoWidth;
+      camCanvas.height = vid.videoHeight;
+    }
+  }
+  const w = camCanvas.width, h = camCanvas.height;
+  camCtx.clearRect(0, 0, w, h);
+
+  if (!lm) {
+    drawHUDText('SHOW HAND TO CAMERA', w / 2, 24, {
+      bg: 'rgba(10, 14, 22, 0.95)',
+      border: 'rgba(255, 23, 68, 0.4)',
+      color: '#ff1744',
+      font: '600 10px "Space Grotesk", monospace'
+    });
+    return;
+  }
+
+  const wrist = lm[0];
+  const wx = wrist.x * w, wy = wrist.y * h;
+
+  let bMinX = w, bMaxX = 0, bMinY = h, bMaxY = 0;
+  lm.forEach(pt => {
+    const px = pt.x * w, py = pt.y * h;
+    if (px < bMinX) bMinX = px; if (px > bMaxX) bMaxX = px;
+    if (py < bMinY) bMinY = py; if (py > bMaxY) bMaxY = py;
+  });
+  const pad = 14;
+  bMinX = Math.max(4, bMinX - pad); bMaxX = Math.min(w - 4, bMaxX + pad);
+  bMinY = Math.max(4, bMinY - pad); bMaxY = Math.min(h - 4, bMaxY + pad);
+
+  camCtx.strokeStyle = 'rgba(255, 23, 68, 0.85)';
+  camCtx.lineWidth = 1.5;
+  const cL = 12;
+  camCtx.beginPath();
+  camCtx.moveTo(bMinX, bMinY + cL); camCtx.lineTo(bMinX, bMinY); camCtx.lineTo(bMinX + cL, bMinY);
+  camCtx.moveTo(bMaxX - cL, bMinY); camCtx.lineTo(bMaxX, bMinY); camCtx.lineTo(bMaxX, bMinY + cL);
+  camCtx.moveTo(bMinX, bMaxY - cL); camCtx.lineTo(bMinX, bMaxY); camCtx.lineTo(bMinX + cL, bMaxY);
+  camCtx.moveTo(bMaxX - cL, bMaxY); camCtx.lineTo(bMaxX, bMaxY); camCtx.lineTo(bMaxX, bMaxY - cL);
+  camCtx.stroke();
+
+  drawHUDText('🔴 LASER POINTER ACTIVE', (bMinX + bMaxX) / 2, bMinY - 8, {
+    bg: 'rgba(8, 12, 18, 0.94)',
+    border: 'rgba(255, 23, 68, 0.4)',
+    color: '#ff1744',
+    font: '700 9px "Space Grotesk", monospace'
+  });
+
+  const knuckleBases = [1, 5, 9, 13, 17];
+  camCtx.strokeStyle = 'rgba(255, 23, 68, 0.65)';
+  camCtx.lineWidth = 2.2;
+  knuckleBases.forEach(k => {
+    camCtx.beginPath();
+    camCtx.moveTo(wx, wy);
+    camCtx.lineTo(lm[k].x * w, lm[k].y * h);
+    camCtx.stroke();
+  });
+
+  const fingerChains = [
+    { color: '#ff1744', nodes: [1, 2, 3, 4] },
+    { color: '#00f0ff', nodes: [5, 6, 7, 8] },
+    { color: '#a855f7', nodes: [9, 10, 11, 12] },
+    { color: '#f59e0b', nodes: [13, 14, 15, 16] },
+    { color: '#ec4899', nodes: [17, 18, 19, 20] }
+  ];
+  fingerChains.forEach(f => {
+    camCtx.strokeStyle = f.color;
+    camCtx.lineWidth = 2.8;
+    camCtx.beginPath();
+    for (let i = 0; i < f.nodes.length - 1; i++) {
+      camCtx.moveTo(lm[f.nodes[i]].x * w, lm[f.nodes[i]].y * h);
+      camCtx.lineTo(lm[f.nodes[i + 1]].x * w, lm[f.nodes[i + 1]].y * h);
+    }
+    camCtx.stroke();
+  });
+
+  for (let i = 0; i < lm.length; i++) {
+    const isTip = (i === 4 || i === 8 || i === 12 || i === 16 || i === 20);
+    camCtx.fillStyle = isTip ? '#ffffff' : '#ff1744';
+    camCtx.beginPath();
+    camCtx.arc(lm[i].x * w, lm[i].y * h, isTip ? 5 : 3.5, 0, Math.PI * 2);
+    camCtx.fill();
+  }
+
+  if (isPinch && pinchMid) {
+    const t4 = lm[4], t8 = lm[8];
+    camCtx.strokeStyle = '#ff1744';
+    camCtx.lineWidth = 3.5;
+    camCtx.beginPath();
+    camCtx.moveTo(t4.x * w, t4.y * h);
+    camCtx.lineTo(t8.x * w, t8.y * h);
+    camCtx.stroke();
+
+    drawHUDText('PINCH ROTATING 360°', (t4.x * w + t8.x * w) / 2, (t4.y * h + t8.y * h) / 2 - 12, {
+      bg: 'rgba(30, 0, 10, 0.95)',
+      border: '#ff1744',
+      color: '#ff1744',
+      font: '700 9px "Space Grotesk", monospace'
+    });
+  }
+}
+
+// ── Landmark Processing (PINCH TO ROTATE) ──
+function processLandmarks(lm) {
+  lastDetectedLandmarks = lm;
+  if (!lm) {
+    currentTp = null;
+    gestureLabel = 'IDLE';
+    prevPinchPos = null;
+    isPinchActive = false;
+    drawCamHUD(null);
+    return;
+  }
+
+  const wrist = lm[0];
+  const thumbTip = lm[4];
+  const indexTip = lm[8];
+  const middleTip = lm[12];
+
+  let tp = { x: indexTip.x, y: indexTip.y };
+  let isPinch = false, pinchMid = null;
+
+  const pinchDistIndex = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
+  const pinchDistMiddle = Math.hypot(thumbTip.x - middleTip.x, thumbTip.y - middleTip.y);
+  const isPinching = (pinchDistIndex < 0.095 || pinchDistMiddle < 0.095);
+
+  const tips = [8, 12, 16, 20], mcps = [5, 9, 13, 17];
+  let curled = 0;
+  for (let i = 0; i < 4; i++) {
+    if (Math.hypot(lm[tips[i]].x - wrist.x, lm[tips[i]].y - wrist.y) < Math.hypot(lm[mcps[i]].x - wrist.x, lm[mcps[i]].y - wrist.y) * 1.15) {
+      curled++;
+    }
+  }
+  const isFist = curled >= 4;
+  const isThumbUp = thumbTip.y < lm[3].y && thumbTip.y < lm[5].y - 0.08 && isFist;
+
+  let dRot = 0;
+
+  if (isFist && !isThumbUp && !isPinching) {
+    gestureLabel = 'LOCKED ✊';
+    angVel = 0;
+    prevPinchPos = null;
+    isPinchActive = false;
+  } else if (isThumbUp && !isPinching) {
+    gestureLabel = 'RESET (0°) 👍';
+    targetRotY = 0; rotY = 0; angVel = 0; targetZoom = 5.8; tPanX = 0; tPanY = 0;
+    prevPinchPos = null;
+    isPinchActive = false;
+  } else if (isPinching) {
+    isPinch = true;
+    isPinchActive = true;
+    pinchMid = { x: (thumbTip.x + indexTip.x) / 2, y: (thumbTip.y + indexTip.y) / 2 };
+    tp = pinchMid;
+
+    if (prevPinchPos !== null) {
+      const dx = pinchMid.x - prevPinchPos.x;
+      if (Math.abs(dx) > 0.001) {
+        dRot = -dx * Math.PI * 3.4 * sensitivity;
+        targetRotY += dRot;
+        angVel = dRot * 0.35;
+        gestureLabel = dx < 0 ? 'PINCH ➔ RIGHT ⟳' : 'PINCH ➔ LEFT ⟲';
+      } else {
+        gestureLabel = 'PINCH ACTIVE';
+        angVel *= 0.88;
+      }
+    } else {
+      gestureLabel = 'PINCH ACTIVE';
+    }
+    prevPinchPos = { x: pinchMid.x, y: pinchMid.y };
+  } else {
+    gestureLabel = 'AIMING 🔴';
+    angVel *= 0.88;
+    prevPinchPos = null;
+    isPinchActive = false;
+    tp = { x: indexTip.x, y: indexTip.y };
+  }
+
+  // Discrete Gesture Sound Triggers
+  if (isPinchActive && !wasPinchActive) playPinchGrabSFX();
+  else if (!isPinchActive && wasPinchActive) playPinchReleaseSFX();
+  wasPinchActive = isPinchActive;
+
+  if (isFist && !wasFist && !isThumbUp && !isPinching) playFistSFX();
+  wasFist = isFist;
+
+  if (isThumbUp && !wasThumbUp && !isPinching) playThumbsUpSFX();
+  wasThumbUp = isThumbUp;
+
+  currentTp = tp;
+  drawCamHUD(lm, isPinch, pinchMid);
+}
+
+// ── Computer Vision Fallback Engine ──
+const cvCanvas = document.createElement('canvas');
+cvCanvas.width = 160; cvCanvas.height = 120;
+const cvCtx = cvCanvas.getContext('2d', { willReadFrequently: true });
+let prevFrameData = null;
+let lastMediaPipeDetectTime = 0;
+
+function runBioOpticalTracker(videoEl) {
+  if (!videoEl || videoEl.videoWidth === 0) return;
+  if (performance.now() - lastMediaPipeDetectTime < 120) return;
+
+  try {
+    cvCtx.drawImage(videoEl, 0, 0, 160, 120);
+    const frame = cvCtx.getImageData(0, 0, 160, 120);
+    const data = frame.data;
+
+    let totalX = 0, totalY = 0, count = 0;
+    let minX = 160, maxX = 0, minY = 120, maxY = 0;
+
+    for (let y = 0; y < 120; y += 2) {
+      for (let x = 0; x < 160; x += 2) {
+        const i = (y * 160 + x) * 4;
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+
+        let isMotion = false;
+        if (prevFrameData) {
+          const pr = prevFrameData[i], pg = prevFrameData[i + 1], pb = prevFrameData[i + 2];
+          if (Math.abs(r - pr) + Math.abs(g - pg) + Math.abs(b - pb) > 18) isMotion = true;
+        }
+
+        const isSkin = ((r > 35 && g > 20 && b > 10 && r > g && (r - b) > 5) ||
+                        (r > 55 && g > 35 && b > 25 && (r - g) >= 4 && (r - b) >= 5) ||
+                        (r > 80 && g > 60 && b > 45 && Math.abs(r - g) < 90));
+
+        if (isSkin || isMotion) {
+          totalX += x; totalY += y; count++;
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+        }
+      }
+    }
+    prevFrameData = new Uint8ClampedArray(data);
+
+    if (count > 15) {
+      const cx = (totalX / count) / 160;
+      const cy = (totalY / count) / 120;
+      const hScale = Math.max(0.14, Math.min(0.55, (maxY - minY) / 120));
+      const wScale = Math.max(0.14, Math.min(0.55, (maxX - minX) / 160));
+
+      const synLM = [];
+      const wx = cx, wy = Math.min(0.92, cy + hScale * 0.45);
+      synLM.push({ x: wx, y: wy, z: 0 });
+
+      synLM.push({ x: wx - wScale * 0.35, y: wy - hScale * 0.25, z: 0 });
+      synLM.push({ x: wx - wScale * 0.52, y: wy - hScale * 0.48, z: 0 });
+      synLM.push({ x: wx - wScale * 0.48, y: wy - hScale * 0.70, z: 0 });
+      synLM.push({ x: wx - wScale * 0.20, y: wy - hScale * 0.88, z: 0 });
+
+      const fConfig = [{ bx: -0.16, l: 0.85 }, { bx: 0.04, l: 0.98 }, { bx: 0.22, l: 0.86 }, { bx: 0.38, l: 0.70 }];
+      fConfig.forEach(f => {
+        synLM.push({ x: wx + wScale * f.bx, y: wy - hScale * 0.35, z: 0 });
+        synLM.push({ x: wx + wScale * f.bx * 1.05, y: wy - hScale * (0.35 + f.l * 0.25), z: 0 });
+        synLM.push({ x: wx + wScale * f.bx * 1.1, y: wy - hScale * (0.35 + f.l * 0.55), z: 0 });
+        synLM.push({ x: wx + wScale * f.bx * 1.15, y: wy - hScale * (0.35 + f.l * 0.85), z: 0 });
+      });
+      processLandmarks(synLM);
+    } else {
+      processLandmarks(null);
+    }
+  } catch (e) {}
+}
+
+// ── Initialize Camera ──
+let mpHands = null, camStreamActive = false, camTrackerEnabled = true;
+
+async function initHandTracking() {
+  const videoEl = document.getElementById('cam-video');
+  if (!videoEl) return false;
+
+  try {
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
+      });
+    } catch (e) {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    }
+
+    videoEl.srcObject = stream;
+    await videoEl.play();
+    camStreamActive = true;
+    toast('📷 Camera Linked. Neural Hand Tracker Active.', 'ok');
+
+    if (typeof window.Hands !== 'undefined') {
+      try {
+        mpHands = new window.Hands({
+          locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${f}`
+        });
+        mpHands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.35, minTrackingConfidence: 0.35 });
+        mpHands.onResults(results => {
+          if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            lastMediaPipeDetectTime = performance.now();
+            processLandmarks(results.multiHandLandmarks[0]);
+          } else {
+            runBioOpticalTracker(videoEl);
+          }
+        });
+      } catch (err) {}
+    }
+
+    let isMpBusy = false;
+    const loop = () => {
+      if (camStreamActive && camTrackerEnabled && videoEl.videoWidth > 0) {
+        runBioOpticalTracker(videoEl);
+        if (mpHands && !isMpBusy) {
+          isMpBusy = true;
+          mpHands.send({ image: videoEl }).catch(()=>{}).finally(()=>{ isMpBusy = false; });
+        }
+      }
+      if (camStreamActive) requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+    return true;
+  } catch (err) {
+    camStreamActive = false;
+    toast('Webcam permissions optional. Mouse rotation & laser active.', 'warn');
+    return false;
+  }
+}
+
+// ── Window Resize ──
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ── Main Animation Loop ──
+let fCount = 0, fLast = performance.now();
+const badgeFps = document.getElementById('badge-fps');
+const valAngle = document.getElementById('val-angle');
+const valGesture = document.getElementById('val-gesture');
+const valZoom = document.getElementById('val-zoom');
+
+// Laser pointer smoothed position states
+const laserOrigin = new THREE.Vector3();
+const laserTarget = new THREE.Vector3(0, 0.4, 1.8);
+const currentAimPoint = new THREE.Vector3(0, 0.4, 1.8);
+
+function animate() {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  const time = performance.now() * 0.001;
+  if (mixer) mixer.update(delta);
+
+  if (autoSpin) {
+    targetRotY += 0.007;
+  } else if (Math.abs(angVel) > 0.0001) {
+    targetRotY += angVel;
+    angVel *= 0.92;
+  }
+
+  // Smooth 1:1 continuous physical rotation
+  rotY += (targetRotY - rotY) * 0.20;
+  modelGroup.rotation.y = rotY;
+
+  zoom += (targetZoom - zoom) * 0.12;
+  camera.position.z = zoom;
+  panX += (tPanX - panX) * 0.12;
+  panY += (tPanY - panY) * 0.12;
+  camera.position.x = panX;
+  camera.position.y = 0.4 + panY;
+  camera.lookAt(panX, 0.2 + panY, 0);
+
+  // ── High-Precision 3D Laser Pointer Tracking ──
+  let hitPoint = null;
+
+  if (currentTp && lastDetectedLandmarks && lastDetectedLandmarks.length > 0) {
+    const pointerVec = new THREE.Vector2((currentTp.x * 2 - 1), -(currentTp.y * 2 - 1));
+    raycaster.setFromCamera(pointerVec, camera);
+
+    if (currentModel) {
+      const hits = raycaster.intersectObjects(currentModel.children, true);
+      if (hits.length > 0) {
+        hitPoint = hits[0].point;
+      }
+    }
+    if (!hitPoint) {
+      const stageHits = raycaster.intersectObject(platformMesh, true);
+      if (stageHits.length > 0) hitPoint = stageHits[0].point;
+    }
+    if (!hitPoint) {
+      const p3x = (currentTp.x - 0.5) * 5.8 + panX;
+      const p3y = -(currentTp.y - 0.5) * 4.2 + 0.4 + panY;
+      hitPoint = new THREE.Vector3(p3x, p3y, 0.8);
+    }
+
+    // Laser emitter originates from the bottom corner (presenter's hand position)
+    laserOrigin.set(camera.position.x + (currentTp.x - 0.5) * 1.8 + 0.6, camera.position.y - 0.65, camera.position.z - 1.0);
+  } else {
+    raycaster.setFromCamera(mouseVec, camera);
+    if (currentModel) {
+      const hits = raycaster.intersectObjects(currentModel.children, true);
+      if (hits.length > 0) {
+        hitPoint = hits[0].point;
+      }
+    }
+    if (!hitPoint) {
+      const stageHits = raycaster.intersectObject(platformMesh, true);
+      if (stageHits.length > 0) hitPoint = stageHits[0].point;
+    }
+    if (!hitPoint) {
+      hitPoint = new THREE.Vector3(mouseVec.x * 2.5 + panX, mouseVec.y * 2.0 + 0.4 + panY, 0.8);
+    }
+
+    // Laser emitter originates from presenter position near bottom-right
+    laserOrigin.set(camera.position.x + 0.85 + mouseVec.x * 0.35, camera.position.y - 0.65, camera.position.z - 1.1);
+  }
+
+  // Smooth lerp laser target dot
+  currentAimPoint.lerp(hitPoint, 0.38);
+  laserDotGroup.position.copy(currentAimPoint);
+  laserDotGroup.lookAt(camera.position);
+
+  // Dynamic Laser Beam Geometry Update
+  const beamPositions = laserBeamGeo.attributes.position.array;
+  beamPositions[0] = laserOrigin.x;
+  beamPositions[1] = laserOrigin.y;
+  beamPositions[2] = laserOrigin.z;
+  beamPositions[3] = currentAimPoint.x;
+  beamPositions[4] = currentAimPoint.y;
+  beamPositions[5] = currentAimPoint.z;
+  laserBeamGeo.attributes.position.needsUpdate = true;
+
+  // Laser Pulse & Intensity Dynamics
+  const pulse = 1.0 + Math.sin(time * 18.0) * 0.08;
+  if (isPinchActive || isMouseDown) {
+    laserDotGroup.scale.set(1.45 * pulse, 1.45 * pulse, 1.45 * pulse);
+    dotHalo.rotation.z += 0.08;
+    laserLight.intensity = 3.8;
+    laserLight.distance = 3.2;
+    laserCoreMat.opacity = 1.0;
+    laserGlowMat.opacity = 0.95;
+  } else {
+    laserDotGroup.scale.set(1.0 * pulse, 1.0 * pulse, 1.0 * pulse);
+    dotHalo.rotation.z += 0.03;
+    laserLight.intensity = 2.4;
+    laserLight.distance = 2.4;
+    laserCoreMat.opacity = 0.85;
+    laserGlowMat.opacity = 0.70;
+  }
+
+  // Telemetry Updates
+  let deg = (rotY * (180 / Math.PI)) % 360;
+  if (deg < 0) deg += 360;
+  if (valAngle) valAngle.textContent = `${Math.round(deg)}°`;
+  if (valGesture) valGesture.textContent = gestureLabel;
+  if (valZoom) valZoom.textContent = `${zoom.toFixed(1)}m`;
+
+  // FPS
+  fCount++;
+  const now = performance.now();
+  if (now - fLast >= 500) {
+    if (badgeFps) badgeFps.textContent = Math.round(fCount * 1000 / (now - fLast)) + ' FPS';
+    fCount = 0; fLast = now;
+  }
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// ── UI Handlers ──
+const btnTracker = document.getElementById('btn-tracker');
+if (btnTracker) {
+  btnTracker.addEventListener('click', () => {
+    camTrackerEnabled = !camTrackerEnabled;
+    const cf = document.getElementById('cam-frame');
+    if (cf) cf.style.display = camTrackerEnabled ? 'block' : 'none';
+    btnTracker.classList.toggle('active', camTrackerEnabled);
+    btnTracker.innerHTML = camTrackerEnabled ? '<span>📷</span> Tracker: ON' : '<span>📷</span> Tracker: OFF';
+    toast(camTrackerEnabled ? 'Tracker: Active' : 'Tracker: Disabled', 'ok');
+  });
+}
+
+const btnSfx = document.getElementById('btn-sfx');
+if (btnSfx) {
+  btnSfx.addEventListener('click', () => {
+    sfxEnabled = !sfxEnabled;
+    if (sfxEnabled) initAudio();
+    btnSfx.classList.toggle('active', sfxEnabled);
+    btnSfx.innerHTML = sfxEnabled ? '<span>🔊</span> SFX: ON' : '<span>🔇</span> SFX: OFF';
+    toast(sfxEnabled ? 'Audio SFX: Active' : 'Audio SFX: Muted', 'ok');
+    if (sfxEnabled) playPinchGrabSFX();
+  });
+}
+
+const btnCamExpand = document.getElementById('btn-cam-expand');
+if (btnCamExpand) {
+  btnCamExpand.addEventListener('click', () => {
+    document.getElementById('cam-frame').classList.toggle('expanded');
+  });
+}
+
+const btnOrbit = document.getElementById('btn-orbit');
+if (btnOrbit) {
+  btnOrbit.addEventListener('click', () => {
+    autoSpin = !autoSpin;
+    btnOrbit.classList.toggle('active', autoSpin);
+    toast(autoSpin ? 'Auto-Spin: Engaged' : 'Auto-Spin: Stopped', 'ok');
+  });
+}
+
+const btnReset = document.getElementById('btn-reset');
+if (btnReset) {
+  btnReset.addEventListener('click', () => {
+    targetRotY = 0; rotY = 0; angVel = 0; targetZoom = 5.8; tPanX = 0; tPanY = 0;
+    toast('View Reset to 0° Front', 'ok');
+    playThumbsUpSFX();
+  });
+}
+
+const btnFullscreen = document.getElementById('btn-fullscreen');
+if (btnFullscreen) {
+  btnFullscreen.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      btnFullscreen.classList.add('active');
+    } else {
+      document.exitFullscreen().catch(() => {});
+      btnFullscreen.classList.remove('active');
+    }
+  });
+}
+
+// Auto-initialize camera on load
+initHandTracking();
+
+})();
+</script>
+</body>
+</html>
